@@ -102,7 +102,7 @@ def init_est_larga_escala(f_GHz, UE, BS, d, indoor, rng):
         sig_esp_el_chegada = 0.43
 
     est_larga_escala = {'esp_atraso':     (mu_esp_atraso, sig_exp_atraso),
-                        'fator_Rice':         (mu_K_R, sig_K_R),
+                        'fator_Rice':     (mu_K_R, sig_K_R),
                         'esp_az_saida':   (mu_esp_az_saida, sig_esp_az_saida),
                         'esp_az_chegada': (mu_esp_az_chegada, sig_esp_az_chegada),
                         'esp_el_saida':   (mu_esp_el_saida, sig_esp_el_saida),
@@ -113,7 +113,7 @@ def init_est_larga_escala(f_GHz, UE, BS, d, indoor, rng):
 
 def amostras_larga_escala(est_larga_escala, N, rng):
     amostras = {'esp_atraso':     0,
-                'fator_Rice':         0,
+                'fator_Rice':     0,
                 'esp_az_saida':   0,
                 'esp_az_chegada': 0,
                 'esp_el_saida':   0,
@@ -176,7 +176,7 @@ def potencia_multipercurso(tau, sigma_tau, r_tau, K_R, LoS, N, rng):
     # Normalizando potências
     if(LoS):
         pot_dispersa = np.sum(alpha_hat_quad[1:])
-        alpha_quad = (1/K_R+1) * (alpha_hat_quad/pot_dispersa)
+        alpha_quad = (1/(K_R+1)) * (alpha_hat_quad/pot_dispersa)
         alpha_quad[0] = K_R/(K_R + 1)
     else:
         pot_dispersa = np.sum(alpha_hat_quad)
@@ -188,9 +188,9 @@ def potencia_multipercurso(tau, sigma_tau, r_tau, K_R, LoS, N, rng):
 def plot_potencia_multipercurso(alpha_quad, tau, sigma_tau):
     fig, ax = plt.subplots(figsize = (8, 4.5), layout = 'constrained')
 
-    ax.stem(1e6*tau, alpha_quad, markerfmt='^') # mudando os parametros da curva
+    ax.stem(1e6*tau, alpha_quad, markerfmt='^')
     ax.plot(0, 0, label=fr'$\sigma_\tau = {1e9*sigma_tau:.2f}$ ns')
-    ax.grid(True) #adicinando linhas
+    ax.grid(True)
 
     ax.set_title('Potência Multipercurso')
     ax.set_xlabel(r'$\tau$ ($\mu$s)')
@@ -230,7 +230,7 @@ def azimute_chegada(alpha_quad, sigma_phi_AoA, phi_chegada, LoS, N, rng):
 
 def plot_azimute_chegada(alpha_quad, phi_prime, sigma_phi_AoA):
     fig, ax = plt.subplots(figsize = (8, 4.5), layout = 'constrained', subplot_kw={'projection': 'polar'})
-    ax.stem(phi_prime, alpha_quad, bottom=alpha_quad.min() / 10, linefmt='purple')
+    ax.stem(np.deg2rad(phi_prime), alpha_quad, bottom=alpha_quad.min() / 10, linefmt='purple')
     ax.plot(0, 0, color='k', label=rf'σφ;AoA = {sigma_phi_AoA:.2f}$^o$')
 
     ticks = np.linspace(alpha_quad.min(), alpha_quad.max(), 5)
@@ -264,7 +264,7 @@ def elev_chegada(alpha_quad, sigma_theta_AoA, theta_chegada, LoS, N, rng):
 
 def plot_elev_chegada(alpha_quad, theta_prime, theta_phi_AoA):
     fig, ax = plt.subplots(figsize = (8, 4.5), layout = 'constrained', subplot_kw={'projection': 'polar'})
-    ax.stem(theta_prime, alpha_quad, bottom=alpha_quad.min() / 10, linefmt='orange')
+    ax.stem(np.deg2rad(theta_prime), alpha_quad, bottom=alpha_quad.min() / 10, linefmt='orange')
     ax.plot(0, 0, color='k', label=rf'σ_θ;AoA = {theta_phi_AoA:.2f}$^o$')
 
     ticks = np.linspace(alpha_quad.min(), alpha_quad.max(), 5)
@@ -280,7 +280,7 @@ def plot_elev_chegada(alpha_quad, theta_prime, theta_phi_AoA):
 
 def dir_chegada(phi_prime, theta_prime):
     phi_prime = np.deg2rad(phi_prime)
-    theta_prime = np.rad2deg(theta_prime)
+    theta_prime = np.deg2rad(theta_prime)
 
     r_x = np.cos(phi_prime) * np.sin(theta_prime)
     r_y = np.sin(phi_prime) * np.sin(theta_prime)
@@ -310,7 +310,7 @@ def plot_dir_chegada(r_n, alpha_quad):
     ax.set_ylabel(r'$y$')
     ax.set_zlabel(r'$z$')
     ax.set_title('Direções de Chegada das Componentes Multipercurso')
-    ax.view_init(13, 62)
+    ax.view_init(6, 35)
 
     plt.show()
 
@@ -346,7 +346,7 @@ def plot_doppler(alpha_quad, nu_n):
 
 
 def fases_multipercurso(f_GHz, nu_n, tau):
-    return 2*np.pi*((f_GHz + nu_n)*tau)
+    return 2*np.pi*((1e9*f_GHz + nu_n)*tau)
 
 
 def plot_fases_multipercurso(nu_n, phi_n_bar):

@@ -40,7 +40,7 @@ def transmite_pulso(delta_t, alpha_quad, phi_n_bar, nu_n, tau, N_amostras):
 
     r = 0
     for n in range(len(alpha_quad)):
-        r += alpha_quad[n] * np.exp(-1j*(phi_n_bar[n] - 2*np.pi*nu_n[n]*t_i)) * pulso(t_i - tau[n])
+        r += np.sqrt(alpha_quad[n]) * np.exp(-1j*(phi_n_bar[n] - 2*np.pi*nu_n[n]*t_i)) * pulso(t_i - tau[n])
 
     return r
 
@@ -50,7 +50,7 @@ def plot_pulso_recebido(pulso_transmitido, delta_t, sigma_tau, N_amostras):
 
     fig, ax = plt.subplots(figsize = (8, 4.5), layout = 'constrained')
 
-    ax.plot(1e6*t_i, pulso_transmitido, linewidth=3, label=f'Sinal Recebido')
+    ax.plot(1e6*t_i, np.abs(pulso_transmitido), linewidth=3, label=f'Sinal Recebido')
     ax.plot(1e6*t_i, pulso(t_i), linestyle='--', linewidth=2, label=f'Sinal Trasmitido')
 
     ax.grid(True)

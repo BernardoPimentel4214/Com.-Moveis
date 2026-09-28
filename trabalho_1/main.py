@@ -1,4 +1,13 @@
+######################
+#                    #
+#    0 - ENTRADAS    #
+#                    #
+######################
+
 RANDOM_SEED = 4214
+is_indoor = False  # Não testado 100% (manter False por default)
+f_c = 3            # Em GHz
+dt = 1e-7          # Meia largura do pulso transmitido
 
 ####################################
 #                                  #
@@ -10,10 +19,10 @@ from ambiente_multipercurso import (init_geometria,
                                     plot_geometria,
                                     calcula_angulos)
 
-BS, UE, d, v_rx, rng = init_geometria(indoor=False, seed=RANDOM_SEED) # BS, UE e v_rx tem o formato (A_x, A_y, A_z), d é um float.
-plot_geometria(BS, UE, d, v_rx)                                  # indoor é uma variana booleana que representaa se a UE está em um ambiente fechado
+BS, UE, d, v_rx, rng = init_geometria(indoor=is_indoor, seed=RANDOM_SEED) # BS, UE e v_rx tem o formato (A_x, A_y, A_z), d é um float.
+plot_geometria(BS, UE, d, v_rx)
 
-ang_saida, ang_chegada = calcula_angulos(BS, UE)                 # ang_x = (theta_x, phi_x)
+ang_saida, ang_chegada = calcula_angulos(BS, UE)                          # ang_x = (theta_x, phi_x)
 
 ########################################
 #                                      #
@@ -24,11 +33,11 @@ ang_saida, ang_chegada = calcula_angulos(BS, UE)                 # ang_x = (thet
 from parametros_larga_escala import (init_est_larga_escala,
                                      amostras_larga_escala)
 
-mu_sig_larga_escala, LoS = init_est_larga_escala(f_GHz=3,
+mu_sig_larga_escala, LoS = init_est_larga_escala(f_GHz=f_c,
                                                  UE=UE,
                                                  BS=BS,
                                                  d=d,
-                                                 indoor=False,
+                                                 indoor=is_indoor,
                                                  rng=rng)
 
 print(f'LoS: {LoS}')
@@ -54,7 +63,7 @@ from parametros_larga_escala import (atrasos_multipercurso,
 atrasos, r_tau, indices = atrasos_multipercurso(sigma_tau=amostras['esp_atraso'],
                                                 N=N,
                                                 LoS=LoS,
-                                                indoor=False,
+                                                indoor=is_indoor,
                                                 rng=rng)
 
 potencia, ganho = potencia_multipercurso(tau=atrasos,
@@ -117,21 +126,18 @@ plot_dir_chegada(r_n, alpha_quad=potencia)
 
 from parametros_larga_escala import (desvio_doppler,
                                      plot_doppler,
-                                     fases_multipercurso,
-                                     plot_fases_multipercurso)
+                                     fases_multipercurso)
 
-nu_n = desvio_doppler(f_GHz=3,
+nu_n = desvio_doppler(f_GHz=f_c,
                       r_n=r_n,
                       v_rx=v_rx)
 
 plot_doppler(alpha_quad=potencia,
              nu_n=nu_n)
 
-phi_n_bar = fases_multipercurso(f_GHz=3,                        # Parte estática
-                                nu_n=nu_n[indices],
+phi_n_bar = fases_multipercurso(f_GHz=f_c,                        # Parte estática
+                                nu_n=nu_n,
                                 tau=atrasos)
-
-plot_fases_multipercurso(nu_n[indices], phi_n_bar)
 
 ##################################
 #                                #
@@ -143,18 +149,18 @@ from espalhamento_temporal import (init_pulso,
                                    transmite_pulso,
                                    plot_pulso_recebido)
 
-pulso, espectro_pulso = init_pulso(delta_t=1e-7,
+pulso, espectro_pulso = init_pulso(delta_t=dt,
                                    N_amostras=10000) # Equivalente banda base
 
-pulso_transmitido = transmite_pulso(delta_t=1e-7,
+pulso_transmitido = transmite_pulso(delta_t=dt,
                                     alpha_quad=potencia,
                                     phi_n_bar=phi_n_bar,
-                                    nu_n=nu_n[indices],
+                                    nu_n=nu_n,
                                     tau=atrasos,
                                     N_amostras=10000)
 
 plot_pulso_recebido(pulso_transmitido,
-                       delta_t=1e-7,
+                       delta_t=1e-6,
                        sigma_tau=amostras['esp_atraso'],
                        N_amostras=10000)
 
@@ -164,10 +170,9 @@ plot_pulso_recebido(pulso_transmitido,
 #                                       #
 #########################################
 
-from banda_tempo_coerencia import (autocorrelacao_canal_norm,
-                                   banda_de_coerencia,
+from banda_tempo_coerencia import (banda_de_coerencia,
                                    tempo_de_coerencia)
 
-banda_de_coerencia(alpha_quad=potencia, atrasos=atrasos, nu_n=nu_n[indices], sigma_tau=amostras['esp_atraso'])
+banda_de_coerencia(alpha_quad=potencia, atrasos=atrasos, nu_n=nu_n, sigma_tau=amostras['esp_atraso'])
 
-tempo_de_coerencia(alpha_quad=potencia, atrasos=atrasos, nu_n=nu_n[indices])
+tempo_de_coerencia(alpha_quad=potencia, atrasos=atrasos, nu_n=nu_n)

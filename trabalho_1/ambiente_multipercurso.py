@@ -44,7 +44,7 @@ def init_geometria(indoor, seed):
     h_rx = h_UE(n_fl)
     UE = (UE_x, UE_y, h_rx)
 
-    # a UE se movimenta no plano xy a 3m/s. Sua direção será definida perpendicular ao vetor de raio BS UE no plano xy.
+    # a UE se movimenta no plano xy a 3km/h. Sua direção será definida perpendicular ao vetor de raio BS UE no plano xy.
     r = (UE[0] - BS [0], UE[1] - BS[1], 0)
     v_rx = 0.833333 * np.cross(r, (0, 0, 1)) / np.linalg.vector_norm(np.cross(r, (0, 0, 1)))
 
@@ -108,4 +108,4 @@ def calcula_angulos(BS, UE):
     phi_LoS = np.rad2deg(phi_LoS)
     phi_prime_LoS = np.rad2deg(phi_prime_LoS)
 
-    return (theta_LoS, phi_LoS), (phi_LoS, phi_prime_LoS)
+    return (theta_LoS, phi_LoS), (theta_prime_LoS, phi_prime_LoS)
