@@ -38,9 +38,9 @@ def ganho_relativo_Rice(curvas):
 
 snr_media_dB = 10
 SEED = 4214
-N_t  = 10_000
+N_t  = 100_000
 E_s  = 1
-M    = 16
+M    = 4
 L    = 4
 K_r  = 10
 
@@ -58,11 +58,13 @@ rng_K = np.random.default_rng(SEED + 1)
     é variada. Os símbolos transmitidos serão de uma constelação 16-QAM.
 '''
 
-from scrpits_auxiliares.canal import (init_constelacao_M_QAM,  Tx_simbolos, init_r_beta_phi_l, SEP_QAM_Rayleigh)
+from scrpits_auxiliares.canal import (init_constelacao_M_QAM, Tx_simbolos,
+                                    init_r_beta_phi_l, SEP_QAM_Rayleigh)
 from scrpits_auxiliares.diversidade import (SC, MRC, EGC)
 from scrpits_auxiliares.visualizacoes import (plot_p_out, plot_p_erro, plot_capacidade, plot_ganhos,
-                                            plot_p_out_K, plot_p_erro_K, plot_capacidade_K,
-                                            plot_ganhos_canais, plot_desempenho_canais)
+                                             plot_p_out_K, plot_p_erro_K, plot_capacidade_K,
+                                             plot_ganhos_canais, plot_desempenho_canais,
+                                             plot_desempenho_antenas, plot_diagramas_polares)
 
 K_r = lin(K_r)
 N_g = 30
@@ -312,11 +314,15 @@ plot_p_out_K(dB(th), out_SC_K, out_MRC_K, out_EGC_K, L, snr_media_dB, K_r)
 plot_p_erro_K(gamma_s, SER_SC_K, SER_MRC_K, SER_EGC_K, L, M, K_r)
 plot_capacidade_K(gamma_s, C_SC_K, C_MRC_K, C_EGC_K, L, K_r)
 
-ganho_outage_K = [ganho_relativo_Rice(curvas) for curvas in (out_SC_K, out_MRC_K, out_EGC_K)]
-ganho_SER_K = [ganho_relativo_Rice(curvas) for curvas in (SER_SC_K, SER_MRC_K, SER_EGC_K)]
-ganho_C_K = [ganho_relativo_Rice(curvas) for curvas in (C_SC_K, C_MRC_K, C_EGC_K)]
+ganho_outage_K = [ganho_relativo_Rice(curvas)
+                  for curvas in (out_SC_K, out_MRC_K, out_EGC_K)]
+ganho_SER_K = [ganho_relativo_Rice(curvas)
+               for curvas in (SER_SC_K, SER_MRC_K, SER_EGC_K)]
+ganho_C_K = [ganho_relativo_Rice(curvas)
+             for curvas in (C_SC_K, C_MRC_K, C_EGC_K)]
 
-plot_ganhos_canais(dB(th), ganho_outage, ganho_outage_K, 'Probabilidade de Outage', L, K_r, snr_media_dB)
+plot_ganhos_canais(dB(th), ganho_outage, ganho_outage_K,
+                   'Probabilidade de Outage', L, K_r, snr_media_dB)
 plot_ganhos_canais(dB(gamma_s), ganho_SER, ganho_SER_K, 'SER', L, K_r)
 plot_ganhos_canais(dB(gamma_s), ganho_C, ganho_C_K, 'Capacidade Ergódica', L, K_r)
 
@@ -328,3 +334,34 @@ plot_desempenho_canais(dB(gamma_s), (SER_SC, SER_MRC, SER_EGC),
                        (SER_SC_K, SER_MRC_K, SER_EGC_K), 'SER', K_r, ramos=4, M=M)
 plot_desempenho_canais(dB(gamma_s), (C_SC, C_MRC, C_EGC),
                        (C_SC_K, C_MRC_K, C_EGC_K), 'Capacidade Ergódica', K_r, ramos=4)
+
+###############################################################
+#                                                             #
+#    4 - EFEITO DO DIAGRAMA DA ANTENA RECEPTORA (RAYLEIGH)    #
+#                                                             #
+###############################################################
+
+from scrpits_auxiliares.antenas import receber_rayleigh_antenas, snr_combinadores
+
+gamma_ant = np.array([lin(snr_media_dB)])
+limiar_ant = lin(5)  # 5 dB; mantido igual para os dois diagramas
+resultados_ant = {}
+angulos_ant = None
+
+for diagrama in ('dipolo', 'parabólica'):
+    rng_ant = np.random.default_rng(SEED + 2)
+    _, beta_ant, _, Gr_ant, theta_ant = receber_rayleigh_antenas(
+        rng_ant, s_i[:, 0] + 1j * s_i[:, 1], gamma_ant, L,
+        diagrama=diagrama, E_s=E_s)
+
+    if angulos_ant is None:
+        angulos_ant = theta_ant
+
+    snrs_ant = snr_combinadores(beta_ant, gamma_ant)
+    resultados_ant[diagrama] = {
+        tecnica: (np.mean(snr[:, 0, :] < limiar_ant, axis=1),
+                  np.mean(np.log2(1 + snr[:, 0, :]), axis=1))
+        for tecnica, snr in snrs_ant.items()}
+
+plot_desempenho_antenas(resultados_ant, L, snr_media_dB)
+plot_diagramas_polares(angulos_ant)
